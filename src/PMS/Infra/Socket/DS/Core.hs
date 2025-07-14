@@ -60,17 +60,18 @@ src = lift go >>= yield >> src
 --
 cmd2task :: ConduitT DM.SocketCommand (IOTask ()) AppContext ()
 cmd2task = await >>= \case
-  Just cmd -> flip catchError errHdl $ do
+  Just cmd -> flip catchError (errHdl cmd) $ do
     lift (go cmd) >>= yield >> cmd2task
   Nothing -> do
     $logWarnS DM._LOGTAG "cmd2task: await returns nothing. skip."
     cmd2task
 
   where
-    errHdl :: String -> ConduitT DM.SocketCommand (IOTask ()) AppContext ()
-    errHdl msg = do
+    errHdl :: DM.SocketCommand -> String -> ConduitT DM.SocketCommand (IOTask ()) AppContext ()
+    errHdl socketCmd msg = do
+      let jsonrpc = DM.getJsonRpcSocketCommand socketCmd
       $logWarnS DM._LOGTAG $ T.pack $ "cmd2task: exception occurred. skip. " ++ msg
-      lift $ errorToolsCallResponse $ "cmd2task: exception occurred. skip. " ++ msg
+      lift $ errorToolsCallResponse jsonrpc $ "cmd2task: exception occurred. skip. " ++ msg
       cmd2task
 
     go :: DM.SocketCommand -> AppContext (IOTask ())
