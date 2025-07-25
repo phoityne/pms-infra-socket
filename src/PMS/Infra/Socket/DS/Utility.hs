@@ -121,32 +121,7 @@ createSocket host port = do
           sock <- socket (addrFamily serverAddr) (addrSocketType serverAddr) (addrProtocol serverAddr)
           connect sock (addrAddress serverAddr)
           return sock
-{-
 
--- |
---   
-sendInitialTelnetOptions :: Socket -> IO ()
-sendInitialTelnetOptions sock = do
-    sendAll sock (iac <> wont <> telopt_echo)
-    sendAll sock (iac <> wont <> telopt_suppress_ga)
-    sendAll sock (iac <> wont <> telopt_naws)
-    sendAll sock (iac <> wont <> telopt_ttype)
-    sendAll sock (iac <> wont <> telopt_new_environ)
-
-    sendAll sock (iac <> dont <> telopt_echo)
-    sendAll sock (iac <> dont <> telopt_suppress_ga)
-    sendAll sock (iac <> dont <> telopt_naws)
-    sendAll sock (iac <> dont <> telopt_ttype)
-
-
--- |
---   
-iac  = B.singleton 0xFF
-do_  = B.singleton 0xFD
-will = B.singleton 0xFB
-wont = B.singleton 0xFC
-dont = B.singleton 0xFE
--}
 
 -- |
 --   
