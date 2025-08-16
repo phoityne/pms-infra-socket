@@ -20,7 +20,6 @@ import qualified PMS.Domain.Model.DM.TH as DM
 data AppData = AppData {
                _socketAppData :: STM.TMVar (Maybe Socket)
              , _lockAppData :: STM.TMVar ()
-             , _jsonrpcAppData :: DM.JsonRpcRequest
              }
 
 makeLenses ''AppData
@@ -32,7 +31,6 @@ defaultAppData = do
   return AppData {
            _socketAppData = mgrVar
          , _lockAppData = lock
-         , _jsonrpcAppData = def
          }
 
 -- |
