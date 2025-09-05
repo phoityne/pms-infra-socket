@@ -322,13 +322,15 @@ genSocketMessageTask cmdData = do
       tout = DM._TIMEOUT_MICROSEC
   prompts <- view DM.promptsDomainData <$> lift ask
   resQ <- view DM.responseQueueDomainData <$> lift ask
+  invalidChars <- view DM.invalidCharsDomainData <$> lift ask
+  invalidCmds <- view DM.invalidCmdsDomainData <$> lift ask
   socketTMVar <- view socketAppData <$> ask
   lockTMVar <- view lockAppData <$> ask
   argsDat <- liftEither $ eitherDecode $ argsBS
   let args = argsDat^.argumentsSocketStringToolParams
 
   $logDebugS DM._LOGTAG $ T.pack $ "genSocketMessageTask: args. " ++ args
-  return $ socketMessageTask cmdData resQ socketTMVar lockTMVar args prompts tout
+  return $ socketMessageTask cmdData resQ socketTMVar lockTMVar args prompts tout invalidChars invalidCmds
 
 -- |
 --
@@ -339,8 +341,10 @@ socketMessageTask :: DM.SocketMessageCommandData
                 -> String  -- arguments line
                 -> [String]  -- prompt list
                 -> Int       -- timeout microsec
+                -> [String]  -- invalidChars
+                -> [String]  -- invalidCmds
                 -> IOTask ()
-socketMessageTask cmdDat resQ socketTMVar lockTMVar args prompts tout = flip E.catchAny errHdl $ do
+socketMessageTask cmdDat resQ socketTMVar lockTMVar args prompts tout invalidChars invalidCmds = flip E.catchAny errHdl $ do
   hPutStrLn stderr $ "[INFO] PMS.Infra.Socket.DS.Core.socketMessageTask run. " ++ args
     
   STM.atomically (STM.readTMVar socketTMVar) >>= \case
@@ -361,7 +365,7 @@ socketMessageTask cmdDat resQ socketTMVar lockTMVar args prompts tout = flip E.c
     go :: Socket -> IO ()
     go sock = do
 
-      msg <- DM.validateMessage args
+      msg <- DM.validateMessage invalidChars invalidCmds args
       let cmd = TE.encodeUtf8 $ T.pack $ msg ++ DM._CRLF
 
       hPutStrLn stderr $ "[INFO] PMS.Infra.Socket.DS.Core.socketMessageTask writeSocket : " ++ BS8.unpack cmd
